@@ -10,7 +10,9 @@ MAX30101 Module
     The MAX30101 is capable of direct I2C communication and can be set on 3 different operating mode (`datasheet <https://datasheets.maximintegrated.com/en/ds/MAX30101.pdf>`_).
 
 """
-import i2c
+#import i2c
+from smbus2 import SMBus
+from time import sleep
 
 # MAX30101 default slave address
 MAX30101_I2CADDR       = 0x57
@@ -161,7 +163,8 @@ MODE_SHDN              = 0b10000000
 MODE_RESET             = 0b01000000
 
 
-class MAX30101(i2c.I2C):
+
+class MAX30101():
     """
 
 ==============
@@ -189,11 +192,19 @@ MAX30101 Class
         data = m301.read_raw_samples(6)
 
     """
+    bus = SMBus(1)
+    buff_red=[]
+    buff_ir=[]
+    buff_green=[]
+    led_mode=MAX30101_MODE_SPO2
 
 
-    def __init__(self, drvname, addr=MAX30101_I2CADDR, clk=400000):
 
-        i2c.I2C.__init__(self, drvname, addr, clk)
+    def __init__(self, addr=MAX30101_I2CADDR, clk=400000):
+        #
+        pass
+        
+        #i2c.I2C.__init__(self, drvname, addr, clk)
         
         # self._mean_hr_cnt = 0
         # self._mean_hr_lgt = 10
@@ -208,9 +219,8 @@ MAX30101 Class
         # self._monitor = False
 
         
-    def init(self, mode = MAX30101_MODE_SPO2, adc_range = MAX30101_RANGE16384, sample_rate = MAX30101_SR_50, pulse_width = MAX3010_LED_PW_411, led_current = [0xFF,0xFF,0x00,0x00], proximity_thrs = 0, slot_multi = [0x00,0x00,0x00,0x00] ):
+    def init(self, mode = MAX30101_MODE_SPO2, adc_range = MAX30101_RANGE16384, sample_rate = MAX30101_SR_1000, pulse_width = MAX3010_LED_PW_118, led_current = [0x5F,0x5F,0x00,0x00], proximity_thrs = 0, slot_multi = [0x00,0x00,0x00,0x00],smp_avg=MAX30101_AVG_4 ):
         """
-
 .. method:: init(mode = 'spo2', adc_range = 3, sample_rate = 50, pulse_width = 411, led_current = [255,255,0,0], proximity_thrs = 0, slot_multi = [0,0,0,0] )
     
     Initialize the MAX30101. Default paramter values enable ``"spo2"`` - without proximity - mode with: maximum ADC range, sampling rate of 50 Hz, LED pulse width of 411us and maximum pulse amplitude for both red and IR LEDs. 
@@ -226,24 +236,29 @@ MAX30101 Class
 .. note:: For details on available values for all the parameters see :func:`set_mode()`.
         
         """
-
         # self.clear_fifo()
-        
-        
-        
+        print("initialising")
         self.reset()
-        sleep(50)
+        print("resetting")
+        sleep(0.05)
         self._set_led(led_current)
-        
+        print("setting led current")
         self._set_multi_slots(slot_multi)
-        
+        print("set slots")
         self._set_led_pw(pulse_width)
+        print("set pw")
         self._set_sample_rate(sample_rate)
+        print("set sample rate")
         self._set_adc_rge(adc_range)
+        print("set adc")
         self.set_fifo_rollover()
+        print("set fifo")
         self._set_prox_thr(proximity_thrs)
+        print("set prox")
         self._set_mode(mode)
-        
+        print("set mode")
+        self.set_sample_averaging(smp_avg)
+        print("set averaging")
 # Write data on register
     # def _write(self, addr, data):
     #     buffer = bytearray(1)
@@ -251,7 +266,24 @@ MAX30101 Class
     #     buffer.append(data)
     #     self.write(buffer)
 
+    def write_read(self,reg, nBytes):
+        data =[]
+        remainingBytes =nBytes
+        readBytes =0
+        while remainingBytes >18:
+            data.extend(self.bus.read_i2c_block_data(MAX30101_I2CADDR, reg,18))
+            remainingBytes -= 18
+        if remainingBytes >0:
+            data.extend(self.bus.read_i2c_block_data(MAX30101_I2CADDR, reg,remainingBytes))        
+        return data
 
+    def write_bytes(self,reg,data):
+        self.bus.write_byte_data(MAX30101_I2CADDR, reg,data)
+
+    def write_byte_block(self,reg,data):
+        self.bus.write_i2c_block_data(MAX30101_I2CADDR, reg,data)
+        
+        
 # FIFO configuration
     def set_sample_averaging(self,n):
         """
@@ -276,6 +308,7 @@ FIFO configuration
         else:
             val = 0
         reg = reg | val<<5
+        #print("MAX30101_FIFO_CONF reg is " + str(reg))
         self.write_bytes(MAX30101_FIFO_CONF,reg)
         
     def set_fifo_rollover(self,ro = True):
@@ -552,6 +585,7 @@ red, ir, green or pilot Led Current (mA)
             reg = reg | mode
             # self._clear_fifo()
         self.write_bytes(MAX30101_MODE_CONF,reg)
+        self.led_mode = mode
     
     
 # SPO2 configuration
