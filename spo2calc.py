@@ -16,7 +16,7 @@ parser.add_argument("--ipFile", default='ppg.csv',
 
 args = parser.parse_args()
 
-BUFF_SIZE = 2000
+BUFF_SIZE = 250
 UPDATE_DELAY = 1.0
 DISP_LENGTH = 100
 
