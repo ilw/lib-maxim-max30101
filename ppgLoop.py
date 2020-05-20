@@ -30,14 +30,12 @@ rowCount =0
 loopCount = 0
 tLoopStart = time.time()
 
+with open(args.opFile, 'wb') as g:
+    csvwriter = csv.writer(g, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    while True:
+        with open(args.ipFile, 'rb') as f:
+            csvreader = csv.reader(f, delimiter=',', quotechar='|')
 
-with open(args.ipFile, 'rb') as f:
-    csvreader = csv.reader(f, delimiter=',', quotechar='|')
-    
-    with open(args.opFile, 'wb') as g:
-        csvwriter = csv.writer(g, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        
-        while True:
             for row in csvreader:
                 csvwriter.writerow(row)
                 
@@ -48,7 +46,9 @@ with open(args.ipFile, 'rb') as f:
                     g.flush()
                     while time.time() < (tLoopStart + loopCount * batch_period):
                         time.sleep(0.01)  
-                    print (time.time())
+                    #print (time.time())
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
                 
             if loopCount > 1000000: #if you forget it in the background
                 break
