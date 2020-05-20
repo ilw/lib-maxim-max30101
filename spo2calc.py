@@ -17,8 +17,9 @@ parser.add_argument("--ipFile", default='ppg.csv',
 args = parser.parse_args()
 
 BUFF_SIZE = 250
-UPDATE_DELAY = 1.0
+UPDATE_DELAY = 1000
 DISP_LENGTH = 100
+LINE_SIZE = 30  #max line length with safety margin. Its usually 17 for spo2
 
 loopCount = 1
 tLoopStart = time.time()
@@ -34,8 +35,16 @@ increment = 2.6e05
 
 xData = np.arange(DISP_LENGTH)
 
-
-readPos = 0 #could speed startup by seeking nearer the end (if filesize > x*BUFF_SIZE, seek to end - x*BUFF_SIZE, search for \n and move just past it
+readPos = 0
+with open(args.ipFile, 'rb') as f:
+    f.seek(0,2)
+    fileSize = f.tell()
+    if fileSize > BUFF_SIZE * LINE_SIZE:
+        f.seek(-BUFF_SIZE * LINE_SIZE, 2) #go that far from the end
+        pos = f.tell()
+        s=f.read(LINE_SIZE)
+        offset = s.find("\r\n")
+        readPos = pos+offset+2
 
 
 #read through all the lines and load the last BUFF_SIZE into memory
@@ -103,7 +112,7 @@ def updatePlt(i):
 
 readPpgData() #do initial read
 
-ani = FuncAnimation(fig, updatePlt, init_func=initPlt, blit=True)
+ani = FuncAnimation(fig, updatePlt, interval = UPDATE_DELAY, init_func=initPlt, blit=True)
 plt.show()
 
 
