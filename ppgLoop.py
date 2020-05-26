@@ -50,6 +50,6 @@ with open(args.opFile, 'w') as g:
                     sys.stdout.write(".")
                     sys.stdout.flush()
                 
-            if loopCount > 10000: #if you forget it in the background
+            if loopCount > 1000000: #if you forget it in the background
                 break
          
