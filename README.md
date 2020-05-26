@@ -35,6 +35,14 @@ wire the board up and test whether communication is happening:
 
 get the necessary python packages:
 
-`pip install smbus2 csv gpiozero`
+`pip install smbus2 csv gpiozero argparse pyqt5`
+
+We need the dev branch of pyqtgraph otherwise you get an error about time not having a clock function (python 3.8 removed that function). Best way is to
+if you have pyqtgraph already - uninstall it   with 
+`pip uninstall pyqtgraph`
+then get the latest pyqtgraph:
+`git clone git clone https://github.com/pyqtgraph/pyqtgraph.git`
+in the repo directory run 
+`python setup.py install`
 
  
