@@ -30,10 +30,10 @@ rowCount =0
 loopCount = 0
 tLoopStart = time.time()
 
-with open(args.opFile, 'wb') as g:
+with open(args.opFile, 'w') as g:
     csvwriter = csv.writer(g, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
     while True:
-        with open(args.ipFile, 'rb') as f:
+        with open(args.ipFile, 'r') as f:
             csvreader = csv.reader(f, delimiter=',', quotechar='|')
 
             for row in csvreader:
