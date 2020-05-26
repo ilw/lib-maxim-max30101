@@ -19,7 +19,7 @@ parser.add_argument("--ipFile", default='ppg.csv',
 args = parser.parse_args()
 
 BUFF_SIZE = 250
-UPDATE_DELAY = 1
+UPDATE_DELAY = 1  #update period in seconds
 DISP_LENGTH = 100
 LINE_SIZE = 30  #max line length with safety margin. Its usually 17 for spo2
 
