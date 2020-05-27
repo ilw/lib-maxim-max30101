@@ -18,51 +18,47 @@ parser.add_argument("--ipFile", default='ppg.csv',
 
 args = parser.parse_args()
 
+
+
+###########################
+#Configurable parameters
+###########################
+
 BUFF_SIZE = 250
 UPDATE_DELAY = 1  #update period in seconds
 DISP_LENGTH = 100
 LINE_SIZE = 30  #max line length with safety margin. Its usually 17 for spo2
 
+###########################
+# Initialise variables
+###########################
+
 loopCount = 1
 tLoopStart = time.time()
-
-
 
 temp_red = np.zeros(BUFF_SIZE,dtype=float)
 temp_ir = np.zeros(BUFF_SIZE,dtype=float)
 temp_green = np.zeros(BUFF_SIZE,dtype=float)
-
 spo2_store = np.zeros(DISP_LENGTH,dtype=float)
 increment = 2.6e05
 
-xData = np.arange(DISP_LENGTH)
-
-#windowWidth = 500       
-#ptr = -windowWidth                      # set first x position
 ptr = -DISP_LENGTH                      # set first x position
 
+readPos = 0
 
+##############################
 ### QtApp Initialisation #####
+##############################
+
 app = QtGui.QApplication([])            # you MUST do this once (initialize things)
 win = pg.GraphicsWindow(title="PPG signal") # creates a window
 p = win.addPlot(title="Realtime plot")  # creates empty space for the plot in the window
 curve = p.plot()                        # create an empty "plot" (a curve to plot)
-##########################################
 
 
 
 
-#Seek to near the end of the file (in case a large recording has been done)
-readPos = 0
-with open(args.ipFile, 'r') as f:
-    f.seek(0,os.SEEK_END)
-    fileSize = f.tell()
-    if fileSize > BUFF_SIZE * LINE_SIZE:
-        pos = f.tell() - BUFF_SIZE * LINE_SIZE
-        f.seek(pos, os.SEEK_SET)   # go backwards 3 bytes
-        s=f.read(LINE_SIZE)
-        offset = s.find("\r\n") #b'\x0D\x0A')  #\r\n
-        readPos = pos+offset+2
+
 
 
 #read through the new data lines and load values into memory
@@ -118,18 +114,25 @@ def updatePlt():
     
 
 
-readPpgData() #do initial read
-
-
-
-
-
-
-
-
-
+######################
 ### MAIN PROGRAM #####    
-# this is a brutal infinite loop calling your realtime data plot
+######################
+
+#Seek to near the end of the file (in case a large recording has been done)
+
+with open(args.ipFile, 'r') as f:
+    f.seek(0,os.SEEK_END)
+    fileSize = f.tell()
+    if fileSize > BUFF_SIZE * LINE_SIZE:
+        pos = f.tell() - BUFF_SIZE * LINE_SIZE
+        f.seek(pos, os.SEEK_SET)   # go backwards 3 bytes
+        s=f.read(LINE_SIZE)
+        offset = s.find("\r\n") #b'\x0D\x0A')  #\r\n
+        readPos = pos+offset+2
+
+
+
+# this is a infinite loop updating the realtime data plot every UPDATE_DELAY
 while True: 
     print (time.time(), tLoopStart + UPDATE_DELAY * loopCount)
     while time.time() < tLoopStart + UPDATE_DELAY * loopCount:
@@ -137,7 +140,10 @@ while True:
     updatePlt()
     loopCount +=1
 
+
+##################
 ### END QtApp ####
+##################
 pg.QtGui.QApplication.exec_() # you MUST put this at the end
 ##################
 
