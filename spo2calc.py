@@ -28,7 +28,7 @@ BUFF_SIZE = 250
 UPDATE_DELAY = 1  #update period in seconds
 DISP_LENGTH = 100
 LINE_SIZE = 30  #max csv line length with safety margin. Its usually 17 for spo2
-
+SPO2_AVERAGING = 20
 
 
 ###########################
@@ -56,9 +56,14 @@ readPos = 0
 app = QtGui.QApplication([])            # you MUST do this once (initialize things)
 win = pg.GraphicsWindow(title="PPG signal") # creates a window
 p = win.addPlot(title="Realtime plot")  # creates empty space for the plot in the window
-curve = p.plot()                        # create an empty "plot" (a curve to plot)
-p.setYRange(50, 100, padding=0)
+rawPen = pg.mkPen(color=(0, 120, 0))   #set up the line colour
+raw_curve = p.plot(pen=rawPen)           # create an empty "plot" (a curve to plot)
 
+smoothPen = pg.mkPen(color=(255, 255, 0), width=2)
+smooth_curve = p.plot(pen=smoothPen)        
+
+p.setYRange(50, 100, padding=0)
+p.showGrid(x=False, y=True, alpha=0.5)
 
 
 
@@ -74,7 +79,7 @@ def readPpgData():
         for row in csvreader:
             if len(row)==3:
                 
-                #What does this increment do???
+                #Output of the PPG has weird step increments, this removes any multiples of that increment.
                 new_red = float(row[0]) - (np.floor(float(row[0])/increment))*increment
                 new_ir = float(row[1]) - (np.floor(float(row[1]) / increment)) * increment
                 new_green = float(row[2]) - (np.floor(float(row[1]) / increment)) * increment
@@ -95,7 +100,7 @@ def readPpgData():
 
     
 def updatePlt():
-    global spo2_store, temp_red, temp_ir, temp_green, ptr, curve, spo2_smooth_store
+    global spo2_store, temp_red, temp_ir, temp_green, ptr, raw_curve, spo2_smooth_store, smooth_curve
     #pass
     readPpgData()
     
@@ -108,14 +113,16 @@ def updatePlt():
     
     spo2_store = np.roll(spo2_store,-1)
     spo2_store[-1] =  spo2
-    spo2_smooth = np.mean(spo2_store[-20:-1])
+    spo2_smooth = np.mean(spo2_store[-SPO2_AVERAGING:-1])
     spo2_smooth_store = np.roll(spo2_smooth_store,-1)
     spo2_smooth_store[-1] = spo2_smooth
     
     
     ptr += 1                              # update x position for displaying the curve
-    curve.setData(spo2_smooth_store)                     # set the curve with this data
-    curve.setPos(ptr,0)                   # set x position in the graph to 0
+    raw_curve.setData(spo2_store)                     # set the curve with this data
+    smooth_curve.setData(spo2_smooth_store)                     
+    raw_curve.setPos(ptr,0)                   # set x position in the graph to 0
+    smooth_curve.setPos(ptr,0)      
     QtGui.QApplication.processEvents()    # you MUST process the plot now
     
     
