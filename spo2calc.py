@@ -27,7 +27,9 @@ args = parser.parse_args()
 BUFF_SIZE = 250
 UPDATE_DELAY = 1  #update period in seconds
 DISP_LENGTH = 100
-LINE_SIZE = 30  #max line length with safety margin. Its usually 17 for spo2
+LINE_SIZE = 30  #max csv line length with safety margin. Its usually 17 for spo2
+
+
 
 ###########################
 # Initialise variables
@@ -40,6 +42,7 @@ temp_red = np.zeros(BUFF_SIZE,dtype=float)
 temp_ir = np.zeros(BUFF_SIZE,dtype=float)
 temp_green = np.zeros(BUFF_SIZE,dtype=float)
 spo2_store = np.zeros(DISP_LENGTH,dtype=float)
+spo2_smooth_store = np.zeros(DISP_LENGTH,dtype=float)
 increment = 2.6e05
 
 ptr = -DISP_LENGTH                      # set first x position
@@ -54,7 +57,7 @@ app = QtGui.QApplication([])            # you MUST do this once (initialize thin
 win = pg.GraphicsWindow(title="PPG signal") # creates a window
 p = win.addPlot(title="Realtime plot")  # creates empty space for the plot in the window
 curve = p.plot()                        # create an empty "plot" (a curve to plot)
-
+p.setYRange(50, 100, padding=0)
 
 
 
@@ -92,7 +95,7 @@ def readPpgData():
 
     
 def updatePlt():
-    global spo2_store, temp_red, temp_ir, temp_green, ptr, curve
+    global spo2_store, temp_red, temp_ir, temp_green, ptr, curve, spo2_smooth_store
     #pass
     readPpgData()
     
@@ -105,9 +108,13 @@ def updatePlt():
     
     spo2_store = np.roll(spo2_store,-1)
     spo2_store[-1] =  spo2
+    spo2_smooth = np.mean(spo2_store[-20:-1])
+    spo2_smooth_store = np.roll(spo2_smooth_store,-1)
+    spo2_smooth_store[-1] = spo2_smooth
+    
     
     ptr += 1                              # update x position for displaying the curve
-    curve.setData(spo2_store)                     # set the curve with this data
+    curve.setData(spo2_smooth_store)                     # set the curve with this data
     curve.setPos(ptr,0)                   # set x position in the graph to 0
     QtGui.QApplication.processEvents()    # you MUST process the plot now
     
