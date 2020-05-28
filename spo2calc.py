@@ -5,9 +5,9 @@ import time
 import numpy as np
 from collections import deque
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui, QtCore
+from pyqtgraph.Qt import QtGui, QtCore, QtWidgets, uic
 import os
-
+from pyqtgraph import PlotWidget, plot
 
 ###########################
 # Read in Arguments & set default parameters
@@ -28,7 +28,7 @@ BUFF_SIZE = 250
 UPDATE_DELAY = 1  #update period in seconds
 DISP_LENGTH = 100
 LINE_SIZE = 30  #max csv line length with safety margin. Its usually 17 for spo2
-SPO2_AVERAGING = 20
+SPO2_AVERAGING = 3
 
 
 ###########################
@@ -49,24 +49,41 @@ ptr = -DISP_LENGTH                      # set first x position
 
 readPos = 0
 
+#############################
+# QT Window
+#############################
+
+class MainWindow(QtWidgets.QMainWindow):
+
+    def __init__(self, *args, **kwargs):
+        super(MainWindow, self).__init__(*args, **kwargs)
+
+        #Load the UI Page
+        uic.loadUi('mainwindow.ui', self)
+
+
+
+
+
 ##############################
 ### QtApp Initialisation #####
 ##############################
 
-app = QtGui.QApplication([])            # you MUST do this once (initialize things)
-win = pg.GraphicsWindow(title="PPG signal") # creates a window
-p = win.addPlot(title="Realtime plot")  # creates empty space for the plot in the window
+app = QtWidgets.QApplication(sys.argv)
+main = MainWindow()
+
+
 rawPen = pg.mkPen(color=(0, 120, 0))   #set up the line colour
-raw_curve = p.plot(pen=rawPen)           # create an empty "plot" (a curve to plot)
+raw_curve = main.graphWidget.plot(pen=rawPen)           # create an empty "plot" (a curve to plot)
 
 smoothPen = pg.mkPen(color=(255, 255, 0), width=2)
-smooth_curve = p.plot(pen=smoothPen)        
+smooth_curve = main.graphWidget.plot(pen=smoothPen)        
 
-p.setYRange(50, 100, padding=0)
-p.showGrid(x=False, y=True, alpha=0.5)
+main.graphWidget.setYRange(50, 100, padding=0)
+main.graphWidget.showGrid(x=False, y=True, alpha=0.5)
 
 
-
+main.show()
 
 
 #read through the new data lines and load values into memory
@@ -129,7 +146,7 @@ def updatePlt():
 
 
 ######################
-### MAIN PROGRAM #####    
+### SETUP  #####    
 ######################
 
 #Seek to near the end of the file (in case a large recording has been done)
@@ -145,19 +162,19 @@ with open(args.ipFile, 'r') as f:
         readPos = pos+offset+2
 
 
+timer  = pg.QtCore.QTimer()
+timer.timeout.connect(updatePlt)
+timer.start(UPDATE_DELAY*1000)
 
-# this is a infinite loop updating the realtime data plot every UPDATE_DELAY
-while True: 
-    print (time.time(), tLoopStart + UPDATE_DELAY * loopCount)
-    while time.time() < tLoopStart + UPDATE_DELAY * loopCount:
-        time.sleep(0.1*UPDATE_DELAY)
-    updatePlt()
-    loopCount +=1
+
+
 
 
 ##################
 ### END QtApp ####
 ##################
-pg.QtGui.QApplication.exec_() # you MUST put this at the end
+if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+        QtGui.QApplication.instance().exec_()
+
 ##################
 
