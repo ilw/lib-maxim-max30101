@@ -117,7 +117,7 @@ def readPpgData():
 
     
 def updatePlt():
-    global spo2_store, temp_red, temp_ir, temp_green, ptr, raw_curve, spo2_smooth_store, smooth_curve
+    global spo2_store, temp_red, temp_ir, temp_green, ptr, raw_curve, spo2_smooth_store, smooth_curve, main
     #pass
     readPpgData()
     
@@ -140,6 +140,7 @@ def updatePlt():
     smooth_curve.setData(spo2_smooth_store)                     
     raw_curve.setPos(ptr,0)                   # set x position in the graph to 0
     smooth_curve.setPos(ptr,0)      
+    main.lblSpo2.setText (str(int(round(spo2)))  + "%" )
     QtGui.QApplication.processEvents()    # you MUST process the plot now
     
     
