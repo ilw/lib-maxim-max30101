@@ -126,7 +126,7 @@ def updatePlt():
     ac_red = np.max(temp_red) - np.min(temp_red)
     ac_ir = np.max(temp_ir) - np.min(temp_ir)
     spo2 = 104 - 17.0*((ac_red/dc_red)/(ac_ir/dc_ir))
-    print(dc_red,dc_ir,ac_red,ac_ir,spo2)
+    #print(dc_red,dc_ir,ac_red,ac_ir,spo2)
     
     spo2_store = np.roll(spo2_store,-1)
     spo2_store[-1] =  spo2
